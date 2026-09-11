@@ -44,21 +44,21 @@ Example request to `POST /predict`:
   "SeniorCitizen": 0,
   "Partner": "Yes",
   "Dependents": "No",
-  "PhoneService": "Yes",
-  "MultipleLines": "No",
+  "tenure": 1,
+  "PhoneService": "No",
+  "MultipleLines": "No phone service",
   "InternetService": "DSL",
-  "OnlineSecurity": "Yes",
-  "OnlineBackup": "No",
+  "OnlineSecurity": "No",
+  "OnlineBackup": "Yes",
   "DeviceProtection": "No",
-  "TechSupport": "Yes",
+  "TechSupport": "No",
   "StreamingTV": "No",
   "StreamingMovies": "No",
-  "Contract": "One year",
+  "Contract": "Month-to-month",
   "PaperlessBilling": "Yes",
-  "PaymentMethod": "Bank transfer (automatic)",
-  "tenure": 24,
-  "MonthlyCharges": 65.5,
-  "TotalCharges": 1572.0
+  "PaymentMethod": "Electronic check",
+  "MonthlyCharges": 29.85,
+  "TotalCharges": 29.85
 }
 ```
 
@@ -73,9 +73,13 @@ Example response:
 }
 ```
 
-The response above is a real call against the v1 model with the first row of the dataset. The threshold is chosen to maximise F1 on cross-validated
+The request above is the first row of the dataset (a one-month, month-to-month DSL customer with no add-ons) and the response is a real call against the v1 model. `TotalCharges` may be null: new customers have a blank there, and the pipeline's median imputer fills it. The threshold is chosen to maximise F1 on cross-validated
 predictions and is stored in the metadata. The API returns the probability, the yes or no decision
 at that threshold, and the threshold itself, so a caller can apply a different cutoff.
+
+## What an interviewer would ask
+
+Churn is about one customer in four, so accuracy lies: always answering "stays" scores about 0.73. The model handles the imbalance with `class_weight="balanced"` and a threshold tuned for F1 on out-of-fold probabilities, which is why the threshold sits at 0.574 rather than 0.5, and why the Brier score (0.169) beats the base-rate constant (about 0.195). Logistic regression won on cross-validated ROC-AUC, 0.846 against 0.838 for gradient boosting at default settings and without class weighting, on seven thousand mostly binary rows where boosting has little headroom. "Deployed to production" here means a versioned artifact with recorded metadata, behind a validated and tested HTTP API, retrained in CI on every push. It does not mean monitoring, authentication, or a container.
 
 ## Metrics
 
