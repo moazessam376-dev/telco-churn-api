@@ -107,6 +107,19 @@ def test_predict_returns_probability_and_threshold(
     assert body["model_version"] == VERSION
 
 
+def test_predict_handles_missing_total_charges(
+    client: TestClient,
+    valid_customer: dict[str, object],
+) -> None:
+    customer_with_missing_total_charges = valid_customer | {"TotalCharges": None}
+
+    response = client.post("/predict", json=customer_with_missing_total_charges)
+    body = response.json()
+
+    assert response.status_code == 200
+    assert 0 <= body["churn_probability"] <= 1
+
+
 def test_predict_is_deterministic(
     client: TestClient,
     valid_customer: dict[str, object],
